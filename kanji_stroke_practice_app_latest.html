@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>小学校漢字 筆順・なぞり練習アプリ</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --brand2: #1d4ed8;
+      --soft: #eff6ff;
+      --ok: #16a34a;
+      --warn: #f59e0b;
+      --bad: #dc2626;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(15,23,42,.08);
+      --kyokasho: "UD Digi Kyokasho N-R", "UD Digi Kyokasho NP-R", "UD Digi Kyokasho NK-R", "UD デジタル 教科書体 N-R", "UD デジタル 教科書体 NP-R", "YuKyokasho", "Yu Kyokasho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, #eef6ff 0, #f6f7fb 40%, #f8fafc 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", "Yu Gothic", "Hiragino Sans", Meiryo, sans-serif;
+      line-height: 1.55;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      background: rgba(246,247,251,.85);
+      border-bottom: 1px solid rgba(226,232,240,.8);
+    }
+    .head {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      justify-content: space-between;
+    }
+    h1 {
+      font-size: clamp(19px, 2.3vw, 30px);
+      margin: 0;
+      letter-spacing: .02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 span.logo {
+      width: 34px; height: 34px; display: inline-grid; place-items: center;
+      border-radius: 13px;
+      background: linear-gradient(135deg, var(--brand), #60a5fa);
+      color: white;
+      box-shadow: 0 8px 18px rgba(37,99,235,.25);
+      font-weight: 800;
+    }
+    .head small { color: var(--muted); display: block; font-weight: 500; margin-top: 0; font-size:12px; }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 10px 14px; height: calc(100vh - 58px); overflow: hidden; }
+    .layout { display: grid; grid-template-columns: minmax(480px, 1.08fr) minmax(360px, .92fr); gap: 14px; align-items: stretch; height:100%; }
+    @media (max-width: 1060px) { html, body { overflow:auto; } .wrap { height:auto; overflow:visible; } .layout { grid-template-columns: 1fr; height:auto; } .practice { position: static!important; height:auto; } } .practice { position: static!important; } }
+    .layout > section { min-height:0; }
+    .layout > section:nth-child(2) { height:100%; min-height:0; display:flex; flex-direction:column; }
+    .layout > section:nth-child(2) > .card { height:100%; min-height:0; display:flex; flex-direction:column; }
+    .kanjiGrid { flex:1; min-height:0; }
+    .practice { background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(239,246,255,.95)); border: 2px solid #bfdbfe; }
+    .card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card.pad { padding: 12px; }
+    .practice { position: sticky; top: 66px; overflow: hidden; max-height:100%; height:100%; display:flex; flex-direction:column; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button, select, input, textarea { font: inherit; }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: .15s ease;
+      font-weight: 700;
+      user-select: none;
+    }
+    button:hover { transform: translateY(-1px); border-color: #bfdbfe; box-shadow: 0 6px 14px rgba(37,99,235,.08); }
+    button.primary { background: var(--brand); color: white; border-color: var(--brand); }
+    button.primary:hover { background: var(--brand2); }
+    button.ghost { background: #f8fafc; }
+    button.active { background: var(--soft); color: var(--brand2); border-color: #93c5fd; }
+    button.ok { color: var(--ok); border-color: #bbf7d0; background: #f0fdf4; }
+    button.starred { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+    .topControls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end; }
+    select, input, textarea {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px 12px;
+      min-height: 42px;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #93c5fd; box-shadow: 0 0 0 4px rgba(147,197,253,.25); }
+    .searchbar { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin: 12px 0 14px; }
+    @media (max-width: 520px) { .searchbar { grid-template-columns: 1fr; } }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+    .tab { padding: 8px 11px; border-radius: 12px; font-size: 14px; }
+    .stats { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; color:var(--muted); font-size: 13px; }
+    .stat { background:#f8fafc; border:1px solid var(--line); border-radius:999px; padding:5px 9px; }
+    .kanjiGrid { display:grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; max-height: calc(100vh - 292px); overflow:auto; padding-right: 3px; }
+    .kbtn {
+      min-height: 44px;
+      border-radius: 12px;
+      padding: 3px;
+      font-size: 24px;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", "Yu Gothic", serif;
+      font-weight: 700;
+      position: relative;
+    }
+    .kbtn.done { background:#dcfce7; border-color:#22c55e; color:#166534; box-shadow:0 0 0 3px rgba(34,197,94,.16); }
+    .kbtn.current { outline: 3px solid rgba(37,99,235,.28); border-color:#60a5fa; background:var(--soft); }
+    .titleRow { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .currentKanji { display:flex; align-items:center; gap:12px; }
+    .bigChar { font-size: 54px; font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-weight: 700; line-height: 1; }
+    .meta { color:var(--muted); font-size: 14px; }
+    .kidBadge { display:inline-flex; align-items:center; gap:6px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; border-radius:999px; padding:6px 10px; font-weight:800; font-size:13px; }
+    .kidGuide { width:min(100%,620px); margin: 4px auto 5px; display:flex; justify-content:space-between; align-items:center; gap:10px; color:#1e3a8a; font-weight:900; }
+    .kidGuide span:first-child { font-size:18px; }
+    .readingBox { display:grid; grid-template-columns: repeat(3, 1fr); gap:7px; margin:6px 0 6px; }
+    .readingCard { background:#fff; border:1.5px solid #dbeafe; border-radius:16px; padding:10px; min-height:58px; box-shadow:0 6px 14px rgba(37,99,235,.06); }
+    .readingCard span { display:block; color:#64748b; font-size:13px; font-weight:900; margin-bottom:4px; }
+    .readingCard b { display:block; font-size:17px; line-height:1.35; word-break:break-word; }
+    .readingCard.on { background:#eff6ff; }
+    .readingCard.kun { background:#f0fdf4; border-color:#bbf7d0; }
+    .readingCard.stroke { background:#fff7ed; border-color:#fed7aa; }
+    @media (max-width: 620px) { .readingBox { display:grid; grid-template-columns: repeat(3, 1fr); gap:7px; margin:6px 0 6px; } .kidGuide { width:min(100%,620px); margin: 4px auto 5px; display:flex; justify-content:space-between; align-items:center; gap:10px; color:#1e3a8a; font-weight:900; } }
+    .stage {
+      position: relative;
+      width: min(100%, 520px, 48vh);
+      aspect-ratio: 1/1;
+      margin: 6px auto 8px;
+      background:
+        linear-gradient(90deg, transparent calc(50% - .5px), #cbd5e1 calc(50% - .5px), #cbd5e1 calc(50% + .5px), transparent calc(50% + .5px)),
+        linear-gradient(0deg, transparent calc(50% - .5px), #cbd5e1 calc(50% - .5px), #cbd5e1 calc(50% + .5px), transparent calc(50% + .5px)),
+        linear-gradient(45deg, transparent calc(50% - .5px), #e2e8f0 calc(50% - .5px), #e2e8f0 calc(50% + .5px), transparent calc(50% + .5px)),
+        linear-gradient(-45deg, transparent calc(50% - .5px), #e2e8f0 calc(50% - .5px), #e2e8f0 calc(50% + .5px), transparent calc(50% + .5px)),
+        #fff;
+      border: 3px solid #93c5fd;
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px #f8fafc;
+    }
+    .stage::after { content:''; position:absolute; inset:5%; border:2px dashed #d1d5db; border-radius:18px; pointer-events:none; }
+    #svgLayer, #textTemplateLayer, #fallbackLayer, #traceCanvas { position:absolute; inset:0; width:100%; height:100%; }
+    #svgLayer svg { width:100%; height:100%; display:block; }
+    #textTemplateLayer { z-index:1; display:none !important; place-items:center; color:rgba(15,23,42,.13); font-size: clamp(250px, 48vw, 440px); font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-weight:800; line-height:1; pointer-events:none; user-select:none; transition:.15s; }
+    #fallbackLayer { display:none; place-items:center; color:rgba(15,23,42,.14); font-size: clamp(250px, 48vw, 440px); font-family: "Yu Mincho", "Hiragino Mincho ProN", serif; font-weight:800; line-height:1; }
+    #traceCanvas { touch-action:none; cursor: crosshair; z-index: 4; }
+    .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+    .message { min-height: 24px; margin-top: 6px; font-weight: 700; }
+    .message.good { color: var(--ok); } .message.warn { color: var(--warn); } .message.bad { color: var(--bad); }
+    .panelTitle { font-weight: 800; margin: 0 0 10px; display:flex; align-items:center; gap:8px; }
+    .section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .progressLine { height: 10px; background:#eef2f7; border-radius:999px; overflow:hidden; margin-top: 7px; }
+    .progressLine > i { display:block; height:100%; width:0%; background: linear-gradient(90deg, #60a5fa, #2563eb); border-radius:999px; transition:.2s; }
+    .analysisGrid { display:grid; gap:7px; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); margin-top:10px; }
+    .pill { background:#fff; border:1px solid var(--line); border-radius:13px; padding:8px 9px; display:flex; align-items:center; justify-content:space-between; gap:7px; }
+    .pill b { font-size: 22px; font-family: var(--kyokasho); }
+    .pill small { color: var(--muted); }
+    textarea { width:100%; min-height: 92px; resize:vertical; }
+    .footer { color:var(--muted); font-size:11px; margin-top: 8px; }
+    .credit { text-align:center; font-weight:900; color:#1e3a8a; margin-top:6px; letter-spacing:.02em; }
+    .footer a { color: var(--brand2); }
+    .loading { opacity:.6; }
+    .modeRow { display:grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    @media (max-width: 460px) { .modeRow { grid-template-columns: 1fr; } .bigChar { font-size:52px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head">
+      <div>
+        <h1><span class="logo">漢</span><span>小学校漢字 筆順・なぞり練習</span></h1>
+        <small>1〜6年 1026字対応／大きくなぞる／読みも確認／©2026 Takayuki WAYAMA</small>
+      </div>
+      <div class="topControls">
+        <button id="randomBtn" class="ghost">ランダム</button>
+        <button id="exportBtn" class="ghost">進捗保存</button>
+        <label><input type="file" id="importFile" accept="application/json" hidden><button id="importBtn" type="button" class="ghost">進捗読込</button></label>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="layout">
+      <section class="practice card pad" aria-label="練習エリア">
+        <div class="titleRow">
+          <div class="currentKanji">
+            <div class="bigChar" id="currentChar">一</div>
+            <div>
+              <div id="currentInfo" class="meta">1年・1/80</div>
+              <div id="strokeInfo" class="meta">筆順データを読み込み中...</div>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="prevBtn" title="前の漢字">←</button>
+            <button id="nextBtn" title="次の漢字">→</button>
+          </div>
+        </div>
+
+        <div class="readingBox" aria-label="読み情報">
+          <div class="readingCard on"><span>音読み</span><b id="onReadings">読み込み中</b></div>
+          <div class="readingCard kun"><span>訓読み</span><b id="kunReadings">読み込み中</b></div>
+          <div class="readingCard stroke"><span>画数</span><b id="readingExtra">—</b></div>
+        </div>
+
+        <div class="kidGuide"><span>✍️ ここに大きく書こう</span><span class="kidBadge">めざせ はなまる！</span></div>
+        <div class="stage" id="stage">
+          <div id="textTemplateLayer"></div>
+          <div id="svgLayer"></div>
+          <div id="fallbackLayer"></div>
+          <canvas id="traceCanvas"></canvas>
+        </div>
+
+        <div class="toolbar" style="justify-content:center">
+          <button id="animateBtn" class="primary">① 筆じゅんを見る</button>
+          <button id="stepBtn">② 一画ずつ</button>
+          <button id="numbersBtn">番号</button>
+          <button id="templateBtn">お手本</button>
+        </div>
+        <div class="toolbar" style="justify-content:center; margin-top:8px">
+          <button id="clearBtn">消去</button>
+          <button id="scoreBtn">採点</button>
+        </div>
+        <div id="message" class="message"></div>
+      </section>
+
+      <section>
+        <div class="card pad">
+          <p class="panelTitle">① 練習する漢字を選ぶ</p>
+          <div class="tabs" id="gradeTabs"></div>
+          <div class="toolbar">
+            <button id="filterAll" class="active">すべて</button>
+            <button id="filterUndone">未達成</button>
+            <select id="jumpGrade" title="学年を選択"></select>
+          </div>
+          <div class="searchbar">
+            <input id="search" placeholder="漢字を検索" autocomplete="off">
+            <button id="clearSearch">クリア</button>
+          </div>
+          <div class="stats" id="stats"></div>
+          <div class="progressLine"><i id="progressBar"></i></div>
+          <div id="kanjiGrid" class="kanjiGrid section"></div>
+          <p class="footer">
+            漢字配当表：学習指導要領LOD「小学校学習指導要領 2017年3月告示」に基づく学年別漢字配当表。筆順表示：KanjiVG © Ulrich Apel, Creative Commons BY-SA 3.0。音訓表示：kanjiapi.dev（KANJIDIC/EDICT由来）。外部データを読み込めない環境では、字体の薄い手本のみ表示されます。
+          </p>
+          <div class="credit">＠2026 Takayuki WAYAMA</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+<script>
+'use strict';
+const GRADE_KANJI = {
+  "1": "一右雨円王音下火花貝学気九休玉金空月犬見五口校左三山子四糸字耳七車手十出女小上森人水正生青夕石赤千川先早草足村大男竹中虫町天田土二日入年白八百文木本名目立力林六",
+  "2": "引羽雲園遠何科夏家歌画回会海絵外角楽活間丸岩顔汽記帰弓牛魚京強教近兄形計元言原戸古午後語工公広交光考行高黄合谷国黒今才細作算止市矢姉思紙寺自時室社弱首秋週春書少場色食心新親図数西声星晴切雪船線前組走多太体台地池知茶昼長鳥朝直通弟店点電刀冬当東答頭同道読内南肉馬売買麦半番父風分聞米歩母方北毎妹万明鳴毛門夜野友用曜来里理話",
+  "3": "悪安暗医委意育員院飲運泳駅央横屋温化荷界開階寒感漢館岸起期客究急級宮球去橋業曲局銀区苦具君係軽血決研県庫湖向幸港号根祭皿仕死使始指歯詩次事持式実写者主守取酒受州拾終習集住重宿所暑助昭消商章勝乗植申身神真深進世整昔全相送想息速族他打対待代第題炭短談着注柱丁帳調追定庭笛鉄転都度投豆島湯登等動童農波配倍箱畑発反坂板皮悲美鼻筆氷表秒病品負部服福物平返勉放味命面問役薬由油有遊予羊洋葉陽様落流旅両緑礼列練路和",
+  "4": "愛案以衣位茨印英栄媛塩岡億加果貨課芽賀改械害街各覚潟完官管関観願岐希季旗器機議求泣給挙漁共協鏡競極熊訓軍郡群径景芸欠結建健験固功好香候康佐差菜最埼材崎昨札刷察参産散残氏司試児治滋辞鹿失借種周祝順初松笑唱焼照城縄臣信井成省清静席積折節説浅戦選然争倉巣束側続卒孫帯隊達単置仲沖兆低底的典伝徒努灯働特徳栃奈梨熱念敗梅博阪飯飛必票標不夫付府阜富副兵別辺変便包法望牧末満未民無約勇要養浴利陸良料量輪類令冷例連老労録",
+  "5": "圧囲移因永営衛易益液演応往桜可仮価河過快解格確額刊幹慣眼紀基寄規喜技義逆久旧救居許境均禁句型経潔件険検限現減故個護効厚耕航鉱構興講告混査再災妻採際在財罪殺雑酸賛士支史志枝師資飼示似識質舎謝授修述術準序招証象賞条状常情織職制性政勢精製税責績接設絶祖素総造像増則測属率損貸態団断築貯張停提程適統堂銅導得毒独任燃能破犯判版比肥非費備評貧布婦武復複仏粉編弁保墓報豊防貿暴脈務夢迷綿輸余容略留領歴",
+  "6": "胃異遺域宇映延沿恩我灰拡革閣割株干巻看簡危机揮貴疑吸供胸郷勤筋系敬警劇激穴券絹権憲源厳己呼誤后孝皇紅降鋼刻穀骨困砂座済裁策冊蚕至私姿視詞誌磁射捨尺若樹収宗就衆従縦縮熟純処署諸除承将傷障蒸針仁垂推寸盛聖誠舌宣専泉洗染銭善奏窓創装層操蔵臓存尊退宅担探誕段暖値宙忠著庁頂腸潮賃痛敵展討党糖届難乳認納脳派拝背肺俳班晩否批秘俵腹奮並陛閉片補暮宝訪亡忘棒枚幕密盟模訳郵優預幼欲翌乱卵覧裏律臨朗論"
+};
+const EXPECTED = {1:80,2:160,3:200,4:202,5:193,6:191};
+const ALL = Object.entries(GRADE_KANJI).flatMap(([g, s]) => [...s].map((ch, i) => ({ ch, grade: Number(g), index: i })));
+const byChar = new Map(ALL.map(o => [o.ch, o]));
+const state = {
+  grade: 1,
+  filter: 'all',
+  current: GRADE_KANJI[1][0],
+  templateMode: 1, // 0:濃い 1:薄い 2:なし
+  showNumbers: true,
+  paths: [],
+  viewBox: [0,0,109,109],
+  stepIndex: 0,
+  drawing: false,
+  last: null,
+  progress: JSON.parse(localStorage.getItem('kanjiStrokeProgress.v1') || '{}'),
+  cache: new Map()
+};
+
+const els = {
+  gradeTabs: document.getElementById('gradeTabs'),
+  jumpGrade: document.getElementById('jumpGrade'),
+  kanjiGrid: document.getElementById('kanjiGrid'),
+  stats: document.getElementById('stats'),
+  progressBar: document.getElementById('progressBar'),
+  currentChar: document.getElementById('currentChar'),
+  currentInfo: document.getElementById('currentInfo'),
+  strokeInfo: document.getElementById('strokeInfo'),
+  onReadings: document.getElementById('onReadings'),
+  kunReadings: document.getElementById('kunReadings'),
+  readingExtra: document.getElementById('readingExtra'),
+  textTemplateLayer: document.getElementById('textTemplateLayer'),
+  svgLayer: document.getElementById('svgLayer'),
+  fallbackLayer: document.getElementById('fallbackLayer'),
+  traceCanvas: document.getElementById('traceCanvas'),
+  stage: document.getElementById('stage'),
+  message: document.getElementById('message'),
+  search: document.getElementById('search'),
+  sentence: document.getElementById('sentence'),
+  analysisSummary: document.getElementById('analysisSummary'),
+  analysisResult: document.getElementById('analysisResult')
+};
+const ctx = els.traceCanvas.getContext('2d', { willReadFrequently: true });
+const targetCanvas = document.createElement('canvas');
+const targetCtx = targetCanvas.getContext('2d', { willReadFrequently: true });
+const readingCache = JSON.parse(localStorage.getItem('kanjiReadingCache.v1') || '{}');
+let readingToken = 0;
+
+function saveProgress() { localStorage.setItem('kanjiStrokeProgress.v1', JSON.stringify(state.progress)); }
+function rec(ch) { return state.progress[ch] || (state.progress[ch] = { done:false, star:false, tries:0, best:0 }); }
+function setMsg(text, type='') { els.message.textContent = text; els.message.className = 'message ' + type; }
+function fileNameFor(ch) { return ch.codePointAt(0).toString(16).padStart(5, '0') + '.svg'; }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function currentList() { return [...GRADE_KANJI[state.grade]]; }
+function visibleChars() {
+  const q = els.search.value.trim();
+  let base = q ? ALL.map(o => o.ch) : currentList();
+  if (q) {
+    const wanted = [...q].filter(ch => byChar.has(ch));
+    if (wanted.length) base = base.filter(ch => wanted.includes(ch));
+    else base = base.filter(ch => ch.includes(q));
+  }
+  if (state.filter === 'undone') base = base.filter(ch => !rec(ch).done);
+  return base;
+}
+
+function initTabs() {
+  els.gradeTabs.innerHTML = '';
+  els.jumpGrade.innerHTML = '';
+  for (let g=1; g<=6; g++) {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (g === state.grade ? ' active' : '');
+    btn.textContent = `${g}年（${GRADE_KANJI[g].length}字）`;
+    btn.onclick = () => selectGrade(g);
+    els.gradeTabs.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = g; opt.textContent = `${g}年`;
+    els.jumpGrade.appendChild(opt);
+  }
+  els.jumpGrade.value = state.grade;
+}
+function selectGrade(g) {
+  state.grade = Number(g);
+  els.jumpGrade.value = String(g);
+  els.search.value = '';
+  const list = visibleChars();
+  selectKanji(list[0] || GRADE_KANJI[state.grade][0]);
+  renderAll();
+}
+
+function renderAll() { initTabs(); renderStats(); renderGrid(); updatePracticeInfo(); }
+function renderStats() {
+  const q = els.search.value.trim();
+  const gradeList = currentList();
+  const visible = visibleChars();
+  const gradeDone = gradeList.filter(ch => rec(ch).done).length;
+  const visibleDone = visible.filter(ch => rec(ch).done).length;
+  const totalDone = ALL.filter(o => rec(o.ch).done).length;
+  if (q) {
+    els.stats.innerHTML = `
+      <span class="stat">検索結果 ${visible.length}字</span>
+      <span class="stat">合格 ${visibleDone}/${visible.length}</span>
+      <span class="stat">全体 ${totalDone}/1026</span>`;
+    els.progressBar.style.width = visible.length ? `${Math.round(visibleDone / visible.length * 100)}%` : '0%';
+  } else {
+    els.stats.innerHTML = `
+      <span class="stat">表示 ${visible.length}字</span>
+      <span class="stat">${state.grade}年 合格 ${gradeDone}/${gradeList.length}</span>
+      <span class="stat">全体 ${totalDone}/1026</span>`;
+    els.progressBar.style.width = `${Math.round(gradeDone / gradeList.length * 100)}%`;
+  }
+}
+function renderGrid() {
+  const frag = document.createDocumentFragment();
+  for (const ch of visibleChars()) {
+    const r = rec(ch);
+    const b = document.createElement('button');
+    b.className = 'kbtn' + (r.done ? ' done' : '') + (ch === state.current ? ' current' : '');
+    b.textContent = ch;
+    b.title = `${byChar.get(ch).grade}年 ${byChar.get(ch).index+1}番目`;
+    b.onclick = () => selectKanji(ch);
+    frag.appendChild(b);
+  }
+  els.kanjiGrid.innerHTML = '';
+  els.kanjiGrid.appendChild(frag);
+}
+function updatePracticeInfo() {
+  const info = byChar.get(state.current);
+  els.currentChar.textContent = state.current;
+  if (els.textTemplateLayer) els.textTemplateLayer.textContent = state.current;
+  els.currentInfo.textContent = `${info.grade}年・${info.index+1}/${GRADE_KANJI[info.grade].length}　全体${ALL.findIndex(o=>o.ch===state.current)+1}/1026`;
+  const doneBtn = document.getElementById('doneBtn');
+  const starBtn = document.getElementById('starBtn');
+  if (doneBtn) doneBtn.classList.toggle('active', !!rec(state.current).done);
+  if (starBtn) starBtn.classList.toggle('starred', !!rec(state.current).star);
+}
+
+function renderReadings(data) {
+  const on = (data.on_readings || []).join('、') || 'なし';
+  const kun = (data.kun_readings || []).join('、') || 'なし';
+  els.onReadings.textContent = on;
+  els.kunReadings.textContent = kun;
+  const strokes = data.stroke_count ? `${data.stroke_count}画` : '—';
+  els.readingExtra.textContent = strokes;
+}
+async function loadReadings(ch) {
+  const token = ++readingToken;
+  els.onReadings.textContent = '読み込み中';
+  els.kunReadings.textContent = '読み込み中';
+  els.readingExtra.textContent = '—';
+  if (readingCache[ch]) { renderReadings(readingCache[ch]); return; }
+  try {
+    const res = await fetch(`https://kanjiapi.dev/v1/kanji/${encodeURIComponent(ch)}`, { mode: 'cors' });
+    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const data = await res.json();
+    if (token !== readingToken) return;
+    readingCache[ch] = {
+      on_readings: data.on_readings || [],
+      kun_readings: data.kun_readings || [],
+      stroke_count: data.stroke_count || null
+    };
+    try { localStorage.setItem('kanjiReadingCache.v1', JSON.stringify(readingCache)); } catch(e) {}
+    renderReadings(readingCache[ch]);
+  } catch(e) {
+    if (token !== readingToken) return;
+    els.onReadings.textContent = '読込不可';
+    els.kunReadings.textContent = '読込不可';
+    els.readingExtra.textContent = '—';
+  }
+}
+
+async function selectKanji(ch) {
+  if (!byChar.has(ch)) return;
+  state.current = ch;
+  state.grade = byChar.get(ch).grade;
+  updatePracticeInfo();
+  renderStats(); renderGrid(); initTabs();
+  clearTrace();
+  loadReadings(ch);
+  await loadSVG(ch);
+}
+
+async function loadSVG(ch) {
+  setMsg('');
+  els.strokeInfo.textContent = '筆順データを読み込み中...';
+  els.svgLayer.innerHTML = '';
+  els.fallbackLayer.style.display = 'none';
+  if (els.textTemplateLayer) { els.textTemplateLayer.textContent = ch; els.textTemplateLayer.style.display = 'none'; }
+  state.paths = []; state.stepIndex = 0;
+  const fname = fileNameFor(ch);
+  const urls = [
+    `https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/${fname}`,
+    `https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/${fname}`
+  ];
+  try {
+    let text = state.cache.get(ch) || '';
+    if (!text) {
+      let lastErr;
+      for (const url of urls) {
+        try {
+          const res = await fetch(url, { mode: 'cors' });
+          if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+          text = await res.text();
+          break;
+        } catch (e) { lastErr = e; }
+      }
+      if (!text) throw lastErr || new Error('SVG not found');
+      state.cache.set(ch, text);
+    }
+    const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const svg = doc.querySelector('svg');
+    if (!svg) throw new Error('SVG parse failed');
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    svg.setAttribute('aria-label', `${ch}の筆順`);
+    svg.setAttribute('role', 'img');
+    const vb = (svg.getAttribute('viewBox') || '0 0 109 109').split(/\s+/).map(Number);
+    state.viewBox = vb.length === 4 ? vb : [0,0,109,109];
+    const paths = [...svg.querySelectorAll('path')].filter(p => p.getAttribute('d'));
+    paths.forEach((p, i) => {
+      p.style.fill = 'none';
+      p.style.stroke = '#111827';
+      p.style.strokeWidth = '3.8';
+      p.style.strokeLinecap = 'round';
+      p.style.strokeLinejoin = 'round';
+      p.dataset.strokeIndex = String(i + 1);
+    });
+    [...svg.querySelectorAll('text')].forEach(t => {
+      t.style.fontFamily = 'system-ui, sans-serif';
+      t.style.fontSize = '8px';
+      t.style.fontWeight = '800';
+      t.style.fill = '#2563eb';
+      t.style.opacity = state.showNumbers ? '.9' : '0';
+    });
+    els.svgLayer.appendChild(document.importNode(svg, true));
+    state.paths = [...els.svgLayer.querySelectorAll('path')].filter(p => p.getAttribute('d'));
+    applyTemplateMode();
+    els.strokeInfo.textContent = `${state.paths.length}画`; 
+    drawTarget();
+  } catch (err) {
+    console.warn(err);
+    if (els.textTemplateLayer) els.textTemplateLayer.style.display = 'none';
+    els.fallbackLayer.textContent = ch;
+    els.fallbackLayer.style.display = 'grid';
+    els.strokeInfo.textContent = '筆順データ未読込';
+    setMsg('筆順データを読み込めませんでした。ネット接続や学校フィルタを確認してください。', 'warn');
+  }
+}
+
+function applyTemplateMode() {
+  if (els.textTemplateLayer) els.textTemplateLayer.style.display = 'none';
+  if (!state.paths.length) return;
+  const settings = [
+    { stroke:'#111827', opacity:1 },
+    { stroke:'#94a3b8', opacity:.48 },
+    { stroke:'#111827', opacity:0 }
+  ][state.templateMode];
+  state.paths.forEach(p => {
+    p.style.stroke = settings.stroke;
+    p.style.opacity = settings.opacity;
+    p.style.strokeDasharray = 'none';
+    p.style.strokeDashoffset = '0';
+  });
+  [...els.svgLayer.querySelectorAll('text')].forEach(t => t.style.opacity = state.showNumbers && state.templateMode !== 2 ? '.9' : '0');
+}
+
+async function animateStrokes() {
+  if (!state.paths.length) return;
+  if (els.textTemplateLayer) els.textTemplateLayer.style.display = 'none';
+  [...els.svgLayer.querySelectorAll('text')].forEach(t => t.style.opacity = state.showNumbers ? '.9' : '0');
+  clearPathAnimations();
+  state.paths.forEach(p => { p.style.opacity = '.18'; p.style.stroke = '#94a3b8'; p.style.strokeDasharray='none'; p.style.strokeDashoffset='0'; });
+  for (const p of state.paths) {
+    const len = p.getTotalLength();
+    p.style.opacity = '1';
+    p.style.stroke = '#2563eb';
+    p.style.strokeDasharray = String(len);
+    p.style.strokeDashoffset = String(len);
+    p.getBoundingClientRect();
+    const anim = p.animate([{strokeDashoffset: len}, {strokeDashoffset: 0}], { duration: Math.min(900, Math.max(360, len * 5)), easing:'ease-in-out', fill:'forwards' });
+    await anim.finished.catch(()=>{});
+    p.style.strokeDashoffset = '0';
+    await sleep(80);
+  }
+}
+function clearPathAnimations() { state.paths.forEach(p => p.getAnimations().forEach(a => a.cancel())); }
+function stepStroke() {
+  if (!state.paths.length) return;
+  if (els.textTemplateLayer) els.textTemplateLayer.style.display = 'none';
+  [...els.svgLayer.querySelectorAll('text')].forEach(t => t.style.opacity = state.showNumbers ? '.9' : '0');
+  clearPathAnimations();
+  state.stepIndex = (state.stepIndex % state.paths.length) + 1;
+  state.paths.forEach((p,i) => {
+    p.style.strokeDasharray = 'none'; p.style.strokeDashoffset='0';
+    if (i < state.stepIndex) { p.style.opacity = '1'; p.style.stroke = '#2563eb'; }
+    else { p.style.opacity = '.13'; p.style.stroke = '#64748b'; }
+  });
+  els.strokeInfo.textContent = `${state.paths.length}画　${state.stepIndex}画目まで表示`;
+}
+
+function resizeCanvas() {
+  const rect = els.stage.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  for (const c of [els.traceCanvas, targetCanvas]) {
+    c.width = Math.round(rect.width * dpr);
+    c.height = Math.round(rect.height * dpr);
+    c.style.width = rect.width + 'px';
+    c.style.height = rect.height + 'px';
+  }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 18; ctx.strokeStyle = '#0f172a';
+  drawTarget();
+}
+function clearTrace() { ctx.clearRect(0,0,els.traceCanvas.width, els.traceCanvas.height); setMsg(''); }
+function canvasPoint(e) {
+  const rect = els.traceCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+els.traceCanvas.addEventListener('pointerdown', e => {
+  els.traceCanvas.setPointerCapture(e.pointerId);
+  state.drawing = true; state.last = canvasPoint(e);
+  ctx.beginPath(); ctx.moveTo(state.last.x, state.last.y);
+});
+els.traceCanvas.addEventListener('pointermove', e => {
+  if (!state.drawing) return;
+  const p = canvasPoint(e);
+  ctx.lineTo(p.x, p.y); ctx.stroke();
+  state.last = p;
+});
+for (const ev of ['pointerup','pointercancel','pointerleave']) els.traceCanvas.addEventListener(ev, () => { state.drawing = false; state.last = null; });
+
+function drawTarget() {
+  if (!state.paths.length || !targetCanvas.width) return;
+  const dpr = window.devicePixelRatio || 1;
+  targetCtx.setTransform(1,0,0,1,0,0);
+  targetCtx.clearRect(0,0,targetCanvas.width,targetCanvas.height);
+  const [vx,vy,vw,vh] = state.viewBox;
+  const w = targetCanvas.width, h = targetCanvas.height;
+  const s = Math.min(w/vw, h/vh) * .82;
+  const ox = (w - vw*s)/2 - vx*s;
+  const oy = (h - vh*s)/2 - vy*s;
+  targetCtx.setTransform(s,0,0,s,ox,oy);
+  targetCtx.lineCap = 'round'; targetCtx.lineJoin = 'round'; targetCtx.strokeStyle = '#000'; targetCtx.lineWidth = 22;
+  for (const p of state.paths) {
+    const d = p.getAttribute('d');
+    try { targetCtx.stroke(new Path2D(d)); } catch(e) {}
+  }
+  targetCtx.setTransform(dpr,0,0,dpr,0,0);
+}
+function scoreTrace() {
+  if (!state.paths.length) { setMsg('筆順データがないため判定できません。', 'warn'); return; }
+  const w = targetCanvas.width, h = targetCanvas.height;
+  const drawn = ctx.getImageData(0,0,w,h).data;
+  const target = targetCtx.getImageData(0,0,w,h).data;
+  let drawnPix=0, goodDrawn=0, targetPix=0, covered=0;
+  const step = 4;
+  for (let y=0; y<h; y+=step) {
+    for (let x=0; x<w; x+=step) {
+      const a = (y*w+x)*4 + 3;
+      const d = drawn[a] > 20;
+      const t = target[a] > 20;
+      if (d) drawnPix++;
+      if (t) targetPix++;
+      if (d && t) goodDrawn++;
+      if (t && d) covered++;
+    }
+  }
+  if (!drawnPix) { setMsg('まだ何も書かれていません。まずはなぞってみましょう。', 'warn'); return; }
+  const accuracy = goodDrawn / Math.max(1, drawnPix);
+  const coverage = covered / Math.max(1, targetPix);
+  const score = Math.min(100, Math.round((accuracy*.35 + coverage*.65) * 100 + 25));
+  const r = rec(state.current); r.tries++; r.best = Math.max(r.best || 0, score); if (score >= 70) r.done = true; saveProgress();
+  let type='bad', msg='もう一度チャレンジ。線の上をゆっくりなぞろう。';
+  if (score >= 90) { type='good'; msg='🌟 はなまる！とてもよく書けています。'; }
+  else if (score >= 70) { type='good'; msg='合格！右の漢字に色がつきました。'; }
+  else if (score >= 45) { type='warn'; msg='あと少し。次は合格できそうです。'; }
+  setMsg(`判定：${score}点　${msg}`, type);
+  renderAll();
+}
+
+function move(delta) {
+  const list = currentList();
+  const i = list.indexOf(state.current);
+  selectKanji(list[(i + delta + list.length) % list.length]);
+}
+function randomKanji() {
+  const list = visibleChars().length ? visibleChars() : currentList();
+  selectKanji(list[Math.floor(Math.random()*list.length)]);
+}
+
+function analyzeSentence() {
+  if (!els.sentence || !els.analysisSummary || !els.analysisResult) return;
+  const text = els.sentence.value;
+  const seen = [];
+  for (const ch of [...text]) if (byChar.has(ch) && !seen.includes(ch)) seen.push(ch);
+  const counts = {1:0,2:0,3:0,4:0,5:0,6:0};
+  let maxGrade = 0;
+  for (const ch of seen) { const g = byChar.get(ch).grade; counts[g]++; maxGrade = Math.max(maxGrade, g); }
+  els.analysisSummary.textContent = seen.length ? `小学校配当漢字 ${seen.length}字。最高学年：${maxGrade}年。` : '小学校配当漢字は見つかりませんでした。';
+  els.analysisResult.innerHTML = '';
+  for (const ch of seen) {
+    const info = byChar.get(ch);
+    const div = document.createElement('button');
+    div.className = 'pill';
+    div.innerHTML = `<b>${ch}</b><small>${info.grade}年</small>`;
+    div.onclick = () => selectKanji(ch);
+    els.analysisResult.appendChild(div);
+  }
+}
+function exportProgress() {
+  const blob = new Blob([JSON.stringify({ app:'kanji-stroke-practice', version:1, exportedAt:new Date().toISOString(), progress:state.progress }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'kanji-progress.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function importProgress(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      state.progress = data.progress || data;
+      saveProgress(); renderAll(); setMsg('進捗を読み込みました。', 'good');
+    } catch(e) { setMsg('進捗ファイルを読み込めませんでした。', 'bad'); }
+  };
+  reader.readAsText(file);
+}
+
+// Events
+window.addEventListener('resize', resizeCanvas);
+document.getElementById('prevBtn').onclick = () => move(-1);
+document.getElementById('nextBtn').onclick = () => move(1);
+document.getElementById('randomBtn').onclick = randomKanji;
+document.getElementById('animateBtn').onclick = animateStrokes;
+document.getElementById('stepBtn').onclick = stepStroke;
+document.getElementById('numbersBtn').onclick = () => { state.showNumbers = !state.showNumbers; applyTemplateMode(); };
+document.getElementById('templateBtn').onclick = () => { state.templateMode = (state.templateMode + 1) % 3; applyTemplateMode(); };
+document.getElementById('clearBtn').onclick = clearTrace;
+document.getElementById('scoreBtn').onclick = scoreTrace;
+const doneBtn = document.getElementById('doneBtn');
+if (doneBtn) doneBtn.onclick = () => { const r=rec(state.current); r.done=!r.done; saveProgress(); renderAll(); };
+const starBtn = document.getElementById('starBtn');
+if (starBtn) starBtn.onclick = () => { const r=rec(state.current); r.star=!r.star; saveProgress(); renderAll(); };
+document.getElementById('filterAll').onclick = () => { state.filter='all'; setFilterButtons(); renderAll(); };
+document.getElementById('filterUndone').onclick = () => { state.filter='undone'; setFilterButtons(); renderAll(); };
+const filterStarBtn = document.getElementById('filterStar');
+if (filterStarBtn) filterStarBtn.onclick = () => { state.filter='star'; setFilterButtons(); renderAll(); };
+function setFilterButtons() {
+  document.getElementById('filterAll').classList.toggle('active', state.filter==='all');
+  document.getElementById('filterUndone').classList.toggle('active', state.filter==='undone');
+  const filterStarBtn2 = document.getElementById('filterStar');
+  if (filterStarBtn2) filterStarBtn2.classList.toggle('active', state.filter==='star');
+}
+els.jumpGrade.onchange = e => selectGrade(e.target.value);
+els.search.addEventListener('input', renderAll);
+document.getElementById('clearSearch').onclick = () => { els.search.value=''; renderAll(); };
+if (document.getElementById('analyzeBtn')) document.getElementById('analyzeBtn').onclick = analyzeSentence;
+if (document.getElementById('sampleBtn')) document.getElementById('sampleBtn').onclick = () => { if (els.sentence) { els.sentence.value='運動会を終え、子供たちは自分の成長を感じながら、次の学習に向かっています。'; analyzeSentence(); } };
+document.getElementById('exportBtn').onclick = exportProgress;
+document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+document.getElementById('importFile').onchange = e => { if (e.target.files[0]) importProgress(e.target.files[0]); };
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') move(-1);
+  if (e.key === 'ArrowRight') move(1);
+  if (e.key === ' ') { e.preventDefault(); animateStrokes(); }
+});
+
+// Boot
+resizeCanvas();
+renderAll();
+selectKanji(state.current);
+</script>
+</body>
+</html>
